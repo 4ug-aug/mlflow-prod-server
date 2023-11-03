@@ -1,5 +1,7 @@
 # mlflow-prod-server
-Clone and Run mlflow ready server with minio s3 artifact storage and postgresql persist storage
+Clone and Run mlflow ready server with minio s3 artifact storage and postgresql persist storage.
+
+The mlflow UI is accessible on [http://localhost:3001](http://localhost:3001) and the minio ui [http://localhost:9001](http://localhost:9001)
 
 ## Quick Start
 ```bash
