@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  mlflow:
+    restart: always
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: mlflow
+    networks:
+      - frontend
+      - backend
+    ports:
+      - 3001:3001
+    environment:
+      - MLFLOW_TRACKING_URI=http://0.0.0.0:3001
+      - MLFLOW_BACKEND_STORE_URI=postgresql://mlflow_user:mlflow_password@postgres:5432/mlflow
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+      - AWS_ACCESS_KEY_ID=miniokeyid
+      - AWS_SECRET_ACCESS_KEY=miniokey
+      - MLFLOW_S3_IGNORE_TLS=true
+    volumes:
+      - ./mlruns:/mlruns
+    depends_on:
+      - minio
+      - postgres
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  minio:
+    image: minio/minio
+    container_name: mlflow_minio
+    ports:
+      - 9000:9000
+      - 9001:9001
+    command: server /data
+    networks:
+      - frontend
+      - backend
+    environment:
+      - MINIO_ROOT_USER=miniouser
+      - MINIO_ROOT_PASSWORD=miniospw
+      - MINIO_SERVER_URL=http://localhost:9000
+      - MINIO_BROWSER_REDIRECT_URL=http://localhost:9001
+      - MINIO_CONSOLE_ADDRESS=:9001
+    volumes:
+      - ./data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  postgres:
+      restart: always
+      image: postgres
+      container_name: mlflow_db
+      expose:
+        - "5432"
+      networks:
+        - backend
+      environment:
+        - POSTGRES_DB=mlflow_db
+        - POSTGRES_USER=mlflow_user
+        - POSTGRES_PASSWORD=mlflow_password
+      volumes:
+        - ./db_data:/var/lib/postgresql/data/
+      healthcheck:
+        test: ["CMD", "pg_isready", "-p", "5432", "-U", "mlflow_user", "-d", "mlflow_db"]
+        interval: 5s
+        timeout: 5s
+        retries: 3
+
+volumes:
+  db_data:
+  minio_data:
+  mlflow:
+
+networks:
+    frontend:
+      driver: bridge
+    backend:
+      driver: bridge
