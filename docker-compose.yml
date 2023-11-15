@@ -5,7 +5,7 @@ services:
     restart: always
     build: 
       context: .
-      dockerfile: Dockerfile
+      dockerfile: mlflow.Dockerfile
     container_name: mlflow
     networks:
       - frontend
@@ -16,8 +16,8 @@ services:
       - MLFLOW_TRACKING_URI=http://0.0.0.0:3001
       - MLFLOW_BACKEND_STORE_URI=postgresql://mlflow_user:mlflow_password@postgres:5432/mlflow
       - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
-      - AWS_ACCESS_KEY_ID=miniokeyid
-      - AWS_SECRET_ACCESS_KEY=miniokey
+      - AWS_ACCESS_KEY_ID=Ozyj2lKh2BTUF0sy3jFa
+      - AWS_SECRET_ACCESS_KEY=229FgjOiMD4nr1Wb06i90vgSxjh5JkyzPYCUk1DA
       - MLFLOW_S3_IGNORE_TLS=true
     volumes:
       - ./mlruns:/mlruns
@@ -73,6 +73,25 @@ services:
         interval: 5s
         timeout: 5s
         retries: 3
+
+  dremio:
+      restart: always
+      image: dremio/dremio-oss
+      container_name: dremio
+      ports:
+        - 9047:9047
+        - 31010:31010
+        - 45678:45678
+      networks:
+        - backend
+      volumes:
+        - ./dremio:/opt/dremio/data
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:9047"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+  
 
 volumes:
   db_data:
